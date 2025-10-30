@@ -1,0 +1,53 @@
+helm repo add jenkins https://charts.jenkins.io
+helm repo update
+
+cat > values-jenkins.yaml <<'YAML'
+controller:
+  adminUser: admin
+  adminPassword: admin123
+  serviceType: LoadBalancer
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - github
+    - configuration-as-code
+  serviceAccount:
+    create: false
+    name: jenkins
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 2Gi
+agent:
+  enabled: true
+  podTemplates:
+    default:
+      containers:
+        - name: node
+          image: node:20
+          command: ["cat"]
+          ttyEnabled: true
+        - name: kubectl
+          image: bitnami/kubectl:latest
+          command: ["cat"]
+          ttyEnabled: true
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:latest
+          command: ["sleep","infinity"]
+          ttyEnabled: true
+          volumeMounts:
+            - name: kaniko-cache
+              mountPath: /kaniko
+      volumes:
+        - type: emptyDir
+          mountPath: /kaniko
+          name: kaniko-cache
+YAML
+
+helm upgrade --install jenkins jenkins/jenkins \
+  -n $JENKINS_NS -f values-jenkins.yaml
+

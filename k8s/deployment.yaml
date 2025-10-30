@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-task
+  namespace: devops-task
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-task
+  template:
+    metadata:
+      labels:
+        app: devops-task
+    spec:
+      containers:
+        - name: devops-task
+          image: asia-south1-docker.pkg.dev/rama17-05-2020/registry/devops-task:__TAG__
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-task
+  namespace: devops-task
+spec:
+  type: LoadBalancer
+  selector:
+    app: devops-task
+  ports:
+    - port: 80
+      targetPort: 3000
+
